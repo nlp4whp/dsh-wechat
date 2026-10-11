@@ -1,0 +1,22 @@
+# Build output
+lib/
+dist/
+*.tgz
+
+# Local verification artifacts
+.verify/
+.smoke/
+
+# Rendered previews of the docs, for reading them in a browser before publishing.
+*-preview.html
+
+# Dependencies
+node_modules/
+
+# Editor and OS noise
+.DS_Store
+Thumbs.db
+*.log
+
+.cache/
+.pnpm-store/

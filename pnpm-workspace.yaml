@@ -1,0 +1,9 @@
+packages:
+  - packages/*
+
+# Hoisted so the vendored core and the bundle resolve the same way in the checkout as once installed.
+nodeLinker: hoisted
+
+# Stops pnpm from checking dependencies before running a script, which could otherwise turn a plain
+# `pnpm test` into an install prompt that no automation can answer.
+verifyDepsBeforeRun: false

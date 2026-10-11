@@ -1,0 +1,47 @@
+{
+  "name": "dsh-lark-workspace",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@12.11.2",
+  "engines": {
+    "node": "^22.19.0 || >=24.0.0"
+  },
+  "//": [
+    "A Git install lands here, not in packages/bundle: `pnpm add git+…` installs this repository.",
+    "So the plugin's entry points and its DSH identity are declared at the root as well, pointing into",
+    "the bundle. The npm package does not need any of this — there the bundle is the package."
+  ],
+  "main": "packages/bundle/lib/host.js",
+  "types": "packages/bundle/lib/host.d.ts",
+  "exports": {
+    ".": {
+      "types": "./packages/bundle/lib/host.d.ts",
+      "default": "./packages/bundle/lib/host.js"
+    },
+    "./client": "./packages/bundle/client.js",
+    "./cordis.patch.yml": "./packages/bundle/cordis.patch.yml",
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./packages/bundle/cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "immediately": true
+    }
+  },
+  "scripts": {
+    "prepare": "pnpm install --ignore-scripts --frozen-lockfile=false && pnpm run dist",
+    "build": "tsc -p packages/core/tsconfig.build.json && tsc -p packages/bundle/tsconfig.build.json",
+    "dist": "pnpm run build && node scripts/inline-core.mjs",
+    "typecheck": "tsc --noEmit -p packages/core/tsconfig.json && tsc --noEmit -p packages/bundle/tsconfig.json",
+    "test": "node --experimental-transform-types --disable-warning=ExperimentalWarning --test --experimental-test-isolation=none packages/core/tests/*.test.ts packages/bundle/tests/*.test.ts",
+    "check": "pnpm build && pnpm typecheck && pnpm test",
+    "pack": "node scripts/pack.mjs"
+  },
+  "devDependencies": {
+    "@types/node": "^24.12.4",
+    "typescript": "^5.9.3"
+  }
+}

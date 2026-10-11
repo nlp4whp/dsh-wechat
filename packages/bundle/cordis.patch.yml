@@ -1,0 +1,15 @@
+# Feishu/Lark channel.
+#
+# Inserts one Host plugin. The web server, session controller, tool registry and assistant stream
+# it needs are read from the running composition through the plugin's `inject` list.
+#
+# The row id matches the package name and the client module id (`dsh-lark-plugin` in all three).
+#
+# `autoStart: false` leaves the channel off until it is enabled in Settings → 飞书; the choice is
+# persisted in the channel's own state file.
+
+- insert:
+    - id: dsh-lark-plugin
+      name: 'dsh-lark-plugin'
+      config:
+        autoStart: false

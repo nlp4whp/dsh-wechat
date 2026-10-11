@@ -1,0 +1,53 @@
+{
+  "name": "dsh-lark-plugin",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Feishu/Lark channel for DeepSeek Harness: drive the agent from Feishu on your phone through lark-cli's long connection. No public IP required.",
+  "keywords": [
+    "dsh",
+    "deepseek-harness",
+    "feishu",
+    "lark",
+    "lark-cli",
+    "chatbot",
+    "channel",
+    "plugin",
+    "remote-control"
+  ],
+  "main": "lib/host.js",
+  "types": "lib/host.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/host.d.ts",
+      "default": "./lib/host.js"
+    },
+    "./client": "./client.js",
+    "./cordis.patch.yml": "./cordis.patch.yml",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib",
+    "dist",
+    "client.js",
+    "cordis.patch.yml",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "@dsh-lark/core": "workspace:*"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "immediately": true
+    }
+  }
+}

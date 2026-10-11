@@ -1,0 +1,24 @@
+{
+  "name": "@dsh-lark/core",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Feishu/Lark channel core for DSH: lark-cli event stream inbound, lark-cli im outbound, routing and state.",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "license": "MIT"
+}
