@@ -17,6 +17,7 @@ export * from './session-index.ts'
 export {
   SessionRouter,
   mintSessionId,
+  parseNewArgs,
   relativeTime,
   renderSessionList,
   renderSessionRow,

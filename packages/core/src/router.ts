@@ -29,6 +29,14 @@ export interface SessionBinding {
   title: string
   createdAt: number
   lastUsedAt: number
+  /**
+   * Working directory the session was created with, when the user passed one to `/new`.
+   *
+   * Absent when no path was specified: the channel uses its default workspace directory in that
+   * case. Stored here so that `ensureSession` on re-adopt can pass the original path rather than
+   * falling back to the channel default, which would strand the session under a different workspace.
+   */
+  cwd?: string
 }
 
 /** Why the router handed work to the agent, for logging. */
@@ -54,7 +62,7 @@ export type RouteResult =
  */
 export interface SessionGateway {
   /** Bind or resume a session with this id. Implementations should be idempotent. */
-  ensureSession(sessionId: string, title: string): Promise<void>
+  ensureSession(sessionId: string, title: string, cwd?: string): Promise<void>
   /** Hand a prompt to a session. */
   prompt(sessionId: string, text: string): Promise<void>
   /** Recent sessions, newest first, for `/list`. */
@@ -124,12 +132,13 @@ export class SessionRouter {
     let binding = bindings[params.conversationId]
     let created = false
     if (binding === undefined) {
-      binding = await this.#bind(params, undefined)
+      binding = await this.#bind(params, undefined, undefined)
       created = true
     } else {
       // DSH may have restarted since this binding was made; make sure the session
-      // is live before handing it a prompt.
-      await this.#gateway.ensureSession(binding.sessionId, binding.title)
+      // is live before handing it a prompt. Pass the stored cwd so a session that
+      // was created with `/new ~/Projects/x` always re-adopts in that directory.
+      await this.#gateway.ensureSession(binding.sessionId, binding.title, binding.cwd)
     }
 
     binding.lastUsedAt = Date.now()
@@ -158,14 +167,16 @@ export class SessionRouter {
         return { kind: 'reply', text: HELP_TEXT }
 
       case '/new': {
-        const binding = await this.#bind(params, args || undefined)
+        const { title: parsedTitle, cwd: parsedCwd } = parseNewArgs(args)
+        const binding = await this.#bind(params, parsedTitle || undefined, parsedCwd)
         // Rebinding is the point of `/new`: the conversation must now *be* the new session, or the
         // next message lands in the old one and the new session exists but is unreachable.
         bindings[params.conversationId] = binding
         await this.#store.save(bindings)
+        const cwdNote = binding.cwd === undefined ? '' : `\n📁 ${binding.cwd}`
         return {
           kind: 'reply',
-          text: `已新建对话「${binding.title}」。\n${shortId(binding.sessionId)}\n\n从现在起，你的消息发到这里。`,
+          text: `已新建对话「${binding.title}」。\n${shortId(binding.sessionId)}${cwdNote}\n\n从现在起，你的消息发到这里。`,
         }
       }
 
@@ -247,11 +258,12 @@ export class SessionRouter {
   async #bind(
     params: { conversationId: string; accountId: string; peerId: string },
     requestedTitle: string | undefined,
+    requestedCwd: string | undefined,
   ): Promise<SessionBinding> {
     const bindings = await this.#load()
     const sessionId = mintSessionId()
     const title = requestedTitle?.trim() || `${this.#titlePrefix} ${shortId(sessionId)}`
-    await this.#gateway.ensureSession(sessionId, title)
+    await this.#gateway.ensureSession(sessionId, title, requestedCwd)
     const now = Date.now()
     const binding: SessionBinding = {
       conversationId: params.conversationId,
@@ -261,6 +273,7 @@ export class SessionRouter {
       title,
       createdAt: now,
       lastUsedAt: now,
+      ...(requestedCwd === undefined ? {} : { cwd: requestedCwd }),
     }
     bindings[params.conversationId] = binding
     await this.#store.save(bindings)
@@ -278,6 +291,31 @@ const COMMANDS_WITH_ARG = ['/new', '/switch'] as const
 
 /** Commands that never take an argument. */
 const COMMANDS_BARE = ['/help', '/list', '/current', '/cancel'] as const
+
+/**
+ * Parse the arguments to `/new` into a title and an optional working directory.
+ *
+ * The path is any token that starts with `/` or `~`, appearing anywhere in the args. Everything
+ * else is the title. Order does not matter:
+ *
+ *   `/new 周报 ~/Projects/weekly-report`  → { title: '周报', cwd: '~/Projects/weekly-report' }
+ *   `/new ~/Projects/weekly-report 周报`  → { title: '周报', cwd: '~/Projects/weekly-report' }
+ *   `/new ~/Projects/weekly-report`       → { title: '', cwd: '~/Projects/weekly-report' }
+ *   `/new 周报`                           → { title: '周报', cwd: undefined }
+ *
+ * The `~` prefix is kept as-is; the host expands it when creating the session.
+ *
+ * @param args - Everything after `/new`, trimmed.
+ * @returns The separated title and cwd.
+ */
+export function parseNewArgs(args: string): { title: string; cwd: string | undefined } {
+  const parts = args.split(/\s+/).filter((part) => part !== '')
+  const pathIdx = parts.findIndex((part) => part.startsWith('/') || part.startsWith('~'))
+  if (pathIdx === -1) return { title: args.trim(), cwd: undefined }
+  const cwd = parts[pathIdx]
+  const titleParts = [...parts.slice(0, pathIdx), ...parts.slice(pathIdx + 1)]
+  return { title: titleParts.join(' '), cwd }
+}
 
 /**
  * Split `/cmd args` into its parts.
@@ -501,12 +539,15 @@ export function relativeTime(at: number, now: number = Date.now()): string {
 
 export const HELP_TEXT = [
   '可用指令：',
-  '/new [标题]     新建对话',
-  '/list           列出最近对话',
-  '/switch <编号>  切换到某个对话',
-  '/current        显示当前对话',
-  '/cancel         中断当前任务',
-  '/help           显示本帮助',
+  '/new [标题] [路径]  新建对话，可选标题和工作目录',
+  '/list              列出最近对话',
+  '/switch <编号>     切换到某个对话',
+  '/current           显示当前对话',
+  '/cancel            中断当前任务',
+  '/help              显示本帮助',
+  '',
+  '路径示例：/new 周报 ~/Projects/weekly-report',
+  '路径必须以 / 或 ~ 开头，也可以单独放在最后。',
   '',
   '直接发消息即与当前对话对话。',
   '',

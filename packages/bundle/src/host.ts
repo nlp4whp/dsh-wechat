@@ -1343,9 +1343,13 @@ class LarkRuntime {
     const ctx = this.#ctx
     const cwd = this.#workspace
     return {
-      ensureSession: async (sessionId: string): Promise<void> => {
-        // Adopt under the session's own workspace: the host pins cwd for a session's life.
-        const home = (await storedSessionWorkspace(this.#home, sessionId)) ?? cwd
+      ensureSession: async (sessionId: string, _title: string, requestedCwd?: string): Promise<void> => {
+        // Precedence: caller-supplied cwd > stored session workspace > channel default.
+        // This ensures a session created with `/new ~/Projects/x` always re-adopts under ~/Projects/x.
+        const home =
+          requestedCwd ??
+          (await storedSessionWorkspace(this.#home, sessionId)) ??
+          cwd
         const workspaceId = await this.#workspaceIdFor(home, isSameWorkspace(home, cwd) ? WORKSPACE_TITLE : '')
         if (workspaceId === '') await ctx.sessionController.create({ sessionId, cwd: home })
         else await ctx.sessionController.create({ sessionId, workspaceId })
