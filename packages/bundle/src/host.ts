@@ -1346,8 +1346,10 @@ class LarkRuntime {
       ensureSession: async (sessionId: string, _title: string, requestedCwd?: string): Promise<void> => {
         // Precedence: caller-supplied cwd > stored session workspace > channel default.
         // This ensures a session created with `/new ~/Projects/x` always re-adopts under ~/Projects/x.
+        const expandTilde = (p: string): string =>
+          p === '~' ? homedir() : p.startsWith('~/') ? join(homedir(), p.slice(2)) : p
         const home =
-          requestedCwd ??
+          (requestedCwd === undefined ? undefined : expandTilde(requestedCwd)) ??
           (await storedSessionWorkspace(this.#home, sessionId)) ??
           cwd
         const workspaceId = await this.#workspaceIdFor(home, isSameWorkspace(home, cwd) ? WORKSPACE_TITLE : '')
