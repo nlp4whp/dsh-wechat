@@ -49,6 +49,16 @@ dsh-lark-plugin
 dsh plugin --profile desktop add dsh-lark-plugin
 ```
 
+本地项目打包安装流程:
+
+```bash
+pnpm install
+pnpm check          # build + typecheck + test
+pnpm run pack       # → dsh-lark-plugin-0.1.0.tgz
+
+dsh plugin --profile web add $PWD/dsh-lark-plugin-0.1.0.tgz
+```
+
 ## 开始用
 
 重启 DSH 后打开**设置 → 飞书**：
