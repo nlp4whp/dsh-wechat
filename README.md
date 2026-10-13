@@ -47,6 +47,8 @@ dsh-lark-plugin
 
 ```bash
 dsh plugin --profile desktop add dsh-lark-plugin
+## 直接从git地址安装
+dsh plugin --profile web add git+https://cnb.cool/git-backup/agentic/dsh-lark-plugin.git
 ```
 
 本地项目打包安装流程:
