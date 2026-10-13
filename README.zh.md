@@ -47,7 +47,22 @@ dsh-lark-plugin
 
 ```bash
 dsh plugin --profile desktop add dsh-lark-plugin
+## 直接从git地址安装
+dsh plugin --profile web add git+https://cnb.cool/git-backup/agentic/dsh-lark-plugin.git
 ```
+
+本地项目打包安装流程:
+
+```bash
+pnpm install
+pnpm check          # build + typecheck + test
+pnpm run pack       # → dsh-lark-plugin-0.1.0.tgz
+
+dsh plugin --profile web add $PWD/dsh-lark-plugin-0.1.0.tgz
+```
+
+> **装不上时先看 pnpm 版本。** `dsh plugin` 用的是 profile 目录里的 `pnpm`：profile 的 `package.json` 没写 `packageManager` 时由 corepack 兜底，可能是 9.x。pnpm 9 解析不了某些插件的预发布 peer 依赖，会报 `ERR_PNPM_NO_MATCHING_VERSION`（例如 `@deepseek-ai/dsh-client-ui-primitives`），与本插件无关。
+> 排查：`cd ~/.dsh/profiles/web && pnpm --version`（`web` 换成你实际用的 profile 名）。是 9.x 就给该 profile 的 `package.json` 加 `"packageManager": "pnpm@12.11.2"`，再重跑安装命令。若 pnpm 12 报 `ERR_PNPM_PUBLIC_HOIST_PATTERN_DIFF`，先执行 `dsh plugin --profile web install` 重建 `node_modules`；报 `ERR_PNPM_MINIMUM_RELEASE_AGE_VIOLATION`，按提示把对应包写进该 profile `pnpm-workspace.yaml` 的 `minimumReleaseAgeExclude`。
 
 ## 开始用
 
