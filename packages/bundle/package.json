@@ -1,6 +1,6 @@
 {
   "name": "dsh-lark-plugin",
-  "version": "0.1.1-rc1",
+  "version": "0.1.2",
   "type": "module",
   "description": "Feishu/Lark channel for DeepSeek Harness: drive the agent from Feishu on your phone through lark-cli's long connection. No public IP required.",
   "keywords": [
@@ -38,6 +38,10 @@
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "license": "MIT",
+  "engines": {
+    "node": "^22.19.0 || >=24.0.0",
+    "dsh": ">=0.2.1-alpha.2 <=0.2.1-alpha.4"
+  },
   "dependencies": {
     "@dsh-lark/core": "workspace:*"
   },

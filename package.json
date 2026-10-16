@@ -4,7 +4,8 @@
   "type": "module",
   "packageManager": "pnpm@12.11.2",
   "engines": {
-    "node": "^22.19.0 || >=24.0.0"
+    "node": "^22.19.0 || >=24.0.0",
+    "dsh": ">=0.2.1-alpha.2 <=0.2.1-alpha.4"
   },
   "//": [
     "A Git install lands here, not in packages/bundle: `pnpm add git+…` installs this repository.",
